@@ -340,6 +340,41 @@ body::before{
 .gcard tr.q2 td:first-child{color:#5EEAD4}
 .gcard td.pts{font-weight:800;color:var(--cup)}
 
+/* ===== DỰ ĐOÁN ===== */
+.predict-card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:16px 18px;margin-bottom:10px;
+  display:grid;grid-template-columns:1fr auto 1fr auto;
+  align-items:center;gap:12px;transition:.25s;
+}
+.predict-card:hover{border-color:rgba(123,47,255,.4)}
+.predict-team{font-weight:600;font-size:14px}
+.predict-team.left{text-align:right}
+.predict-team.right{text-align:left}
+.predict-inputs{display:flex;align-items:center;gap:8px}
+.predict-input{
+  width:44px;height:44px;text-align:center;font-size:18px;font-weight:800;
+  font-family:'Be Vietnam Pro';background:var(--night);color:var(--cup);
+  border:1px solid var(--line);border-radius:10px;outline:none;
+  transition:.2s;
+}
+.predict-input:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(123,47,255,.15)}
+.predict-sep{font-size:18px;font-weight:800;color:var(--ink-dim)}
+.predict-btn{
+  padding:8px 16px;border-radius:50px;border:none;cursor:pointer;
+  font-family:'Be Vietnam Pro';font-weight:700;font-size:12px;
+  text-transform:uppercase;letter-spacing:.06em;transition:.2s;white-space:nowrap;
+}
+.predict-btn.save{background:linear-gradient(110deg,var(--violet),#5B21B6);color:#fff}
+.predict-btn.save:hover{opacity:.85}
+.predict-btn.saved{background:rgba(0,245,160,.12);color:var(--turf);border:1px solid rgba(0,245,160,.3);cursor:default}
+.predict-meta{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+@media(max-width:640px){
+  .predict-card{grid-template-columns:1fr auto 1fr;gap:8px}
+  .predict-card>:last-child{grid-column:1/-1;justify-self:center}
+  .predict-team{font-size:12px}
+}
+
 /* ===== FOOTER ===== */
 footer{
   margin-top:70px;text-align:center;color:var(--ink-dim);font-size:12px;
@@ -449,6 +484,22 @@ footer b{color:var(--turf)}
   <p class="section-sub">THẮNG 3Đ • HÒA 1Đ • TOP 2 MỖI BẢNG ĐI TIẾP (XANH) • 8 ĐỘI TOP 3 CÓ THÀNH TÍCH TỐT NHẤT ĐI TIẾP</p>
   <div class="standings" id="standings"></div>
 
+  <!-- DỰ ĐOÁN TỈ SỐ -->
+  <h2 class="section-title" style="margin-top:54px">Dự đoán tỉ số</h2>
+  <p class="section-sub">Dự đoán kết quả các trận sắp tới — đúng tỉ số chính xác sẽ được ăn mừng 🎉</p>
+  <div id="predict-list"></div>
+
+  <!-- POPUP ĂN MỪNG -->
+  <div id="congrats-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(10,14,39,.88);display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px">
+    <canvas id="fireworks" style="position:fixed;inset:0;pointer-events:none;z-index:998"></canvas>
+    <div style="position:relative;z-index:1000;background:var(--card);border:2px solid var(--cup);border-radius:24px;padding:36px 32px;max-width:480px;width:100%">
+      <div style="font-size:48px;margin-bottom:12px">🏆🎉</div>
+      <h2 style="font-family:'Be Vietnam Pro';font-weight:800;font-size:22px;color:var(--cup);margin-bottom:16px;text-transform:uppercase">Chúc mừng bạn đã dự đoán đúng!</h2>
+      <div id="congrats-matches" style="font-size:14px;color:var(--ink);line-height:2"></div>
+      <button onclick="closeCongrats()" style="margin-top:24px;padding:12px 32px;background:linear-gradient(110deg,var(--cup),var(--coral));border:none;border-radius:50px;font-family:'Be Vietnam Pro';font-weight:800;font-size:14px;color:#1a0a00;cursor:pointer;text-transform:uppercase;letter-spacing:.08em">Tuyệt vời! 🎊</button>
+    </div>
+  </div>
+
   <footer>
     Dữ liệu cập nhật từ <b>Notion</b> • Dashboard by <b>Chan</b> ⚽
   </footer>
@@ -494,6 +545,8 @@ async function load() {
     renderStandings();
     renderStats();
     startCountdown();
+    renderPredictions();
+    checkPredictions();
   } catch (e) {
     document.getElementById('list').innerHTML =
       '<div class="empty-state"><div class="es-icon">⚠️</div><p>Không tải được dữ liệu. Kiểm tra kết nối API nhé!</p></div>';
@@ -732,6 +785,138 @@ function autoFocusToday() {
     const firstMatch = document.querySelector('#list .match');
     if (firstMatch) firstMatch.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
+}
+
+/* ===== DỰ ĐOÁN TỈ SỐ ===== */
+function renderPredictions() {
+  const upcoming = MATCHES.filter(m => m.trangthai === 'Chưa đấu').slice(0, 8);
+  const saved = JSON.parse(localStorage.getItem('wc_predictions') || '{}');
+  const el = document.getElementById('predict-list');
+  if (!upcoming.length) { el.innerHTML = '<p style="color:var(--ink-dim);font-size:14px">Không còn trận nào sắp diễn ra.</p>'; return; }
+
+  el.innerHTML = upcoming.map(m => {
+    const key = m.id;
+    const pred = saved[key];
+    const isSaved = pred !== undefined;
+    return `
+    <div class="predict-card">
+      <div>
+        <div class="predict-team left">${esc(m.doi1)}</div>
+        <div class="predict-meta">${m.ngay} • ${m.gio}</div>
+      </div>
+      <div class="predict-inputs">
+        <input class="predict-input" id="p1_${key}" type="number" min="0" max="20"
+          value="${isSaved ? pred.g1 : ''}" placeholder="0" ${isSaved ? 'disabled' : ''}>
+        <span class="predict-sep">–</span>
+        <input class="predict-input" id="p2_${key}" type="number" min="0" max="20"
+          value="${isSaved ? pred.g2 : ''}" placeholder="0" ${isSaved ? 'disabled' : ''}>
+      </div>
+      <div>
+        <div class="predict-team right">${esc(m.doi2)}</div>
+        <div class="predict-meta" style="text-align:left">${m.bang === 'KO' ? m.vong : 'Bảng ' + m.bang}</div>
+      </div>
+      ${isSaved
+        ? `<button class="predict-btn saved">✓ Đã lưu</button>`
+        : `<button class="predict-btn save" onclick="savePred('${key}','${esc(m.doi1)}','${esc(m.doi2)}')">Lưu dự đoán</button>`
+      }
+    </div>`;
+  }).join('');
+}
+
+function savePred(key, doi1, doi2) {
+  const g1 = document.getElementById('p1_' + key)?.value;
+  const g2 = document.getElementById('p2_' + key)?.value;
+  if (g1 === '' || g2 === '') return alert('Bạn chưa nhập tỉ số!');
+  const saved = JSON.parse(localStorage.getItem('wc_predictions') || '{}');
+  saved[key] = { g1: +g1, g2: +g2, doi1, doi2 };
+  localStorage.setItem('wc_predictions', JSON.stringify(saved));
+  renderPredictions();
+}
+
+function checkPredictions() {
+  const saved = JSON.parse(localStorage.getItem('wc_predictions') || '{}');
+  const checked = JSON.parse(localStorage.getItem('wc_pred_checked') || '{}');
+  const winners = [];
+
+  Object.entries(saved).forEach(([key, pred]) => {
+    if (checked[key]) return;
+    const match = MATCHES.find(m => m.id === key);
+    if (!match || match.trangthai !== 'Đã kết thúc' || !match.tyso) return;
+    const actual = match.tyso.match(/(\d+)\s*-\s*(\d+)/);
+    if (!actual) return;
+    if (+actual[1] === pred.g1 && +actual[2] === pred.g2) {
+      winners.push(`⚽ ${pred.doi1} ${pred.g1} – ${pred.g2} ${pred.doi2}`);
+    }
+    checked[key] = true;
+  });
+
+  localStorage.setItem('wc_pred_checked', JSON.stringify(checked));
+  if (winners.length) showCongrats(winners);
+}
+
+function showCongrats(winners) {
+  const overlay = document.getElementById('congrats-overlay');
+  document.getElementById('congrats-matches').innerHTML = winners.join('<br>');
+  overlay.style.display = 'flex';
+  startFireworks();
+  setTimeout(stopFireworks, 10000);
+}
+
+function closeCongrats() {
+  document.getElementById('congrats-overlay').style.display = 'none';
+  stopFireworks();
+}
+
+/* ===== PHÁO HOA ===== */
+let fwTimer = null, fwParticles = [], fwRunning = false;
+function startFireworks() {
+  const canvas = document.getElementById('fireworks');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  fwRunning = true;
+  fwParticles = [];
+
+  function burst(x, y) {
+    const colors = ['#FFD60A','#FF4D6D','#00F5A0','#7B2FFF','#fff','#FF9F1C'];
+    for (let i = 0; i < 60; i++) {
+      const angle = (Math.PI * 2 / 60) * i;
+      const speed = Math.random() * 6 + 2;
+      fwParticles.push({
+        x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+        alpha: 1, color: colors[Math.floor(Math.random()*colors.length)],
+        r: Math.random()*3+1
+      });
+    }
+  }
+
+  let lastBurst = 0;
+  function draw(ts) {
+    if (!fwRunning) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (ts - lastBurst > 600) {
+      burst(Math.random()*canvas.width*0.8+canvas.width*0.1, Math.random()*canvas.height*0.5+50);
+      lastBurst = ts;
+    }
+    fwParticles = fwParticles.filter(p => p.alpha > 0.02);
+    fwParticles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.alpha -= 0.018;
+      ctx.globalAlpha = p.alpha;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = p.color; ctx.shadowBlur = 8; ctx.shadowColor = p.color;
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    fwTimer = requestAnimationFrame(draw);
+  }
+  fwTimer = requestAnimationFrame(draw);
+}
+
+function stopFireworks() {
+  fwRunning = false;
+  if (fwTimer) cancelAnimationFrame(fwTimer);
+  const canvas = document.getElementById('fireworks');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 }
 
 /* ===== HẠT LẤP LÁNH ===== */
