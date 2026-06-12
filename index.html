@@ -348,9 +348,9 @@ body::before{
   align-items:center;gap:12px;transition:.25s;
 }
 .predict-card:hover{border-color:rgba(123,47,255,.4)}
-.predict-team{font-weight:600;font-size:14px}
-.predict-team.left{text-align:right}
-.predict-team.right{text-align:left}
+.predict-team{font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px}
+.predict-team.left{flex-direction:row-reverse;justify-content:flex-start}
+.predict-team.right{flex-direction:row;justify-content:flex-start}
 .predict-inputs{display:flex;align-items:center;gap:8px}
 .predict-input{
   width:44px;height:44px;text-align:center;font-size:18px;font-weight:800;
@@ -801,8 +801,11 @@ function renderPredictions() {
     return `
     <div class="predict-card">
       <div>
-        <div class="predict-team left">${esc(m.doi1)}</div>
-        <div class="predict-meta">${m.ngay} • ${m.gio}</div>
+        <div class="predict-team left">
+          ${m.co1 ? `<img class="m-crest" src="${m.co1}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <span>${esc(m.doi1)}</span>
+        </div>
+        <div class="predict-meta" style="text-align:right">${m.ngay} • ${m.gio}</div>
       </div>
       <div class="predict-inputs">
         <input class="predict-input" id="p1_${key}" type="number" min="0" max="20"
@@ -812,8 +815,11 @@ function renderPredictions() {
           value="${isSaved ? pred.g2 : ''}" placeholder="0" ${isSaved ? 'disabled' : ''}>
       </div>
       <div>
-        <div class="predict-team right">${esc(m.doi2)}</div>
-        <div class="predict-meta" style="text-align:left">${m.bang === 'KO' ? m.vong : 'Bảng ' + m.bang}</div>
+        <div class="predict-team right">
+          ${m.co2 ? `<img class="m-crest" src="${m.co2}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <span>${esc(m.doi2)}</span>
+        </div>
+        <div class="predict-meta">${m.bang === 'KO' ? m.vong : 'Bảng ' + m.bang}</div>
       </div>
       ${isSaved
         ? `<button class="predict-btn saved">✓ Đã lưu</button>`
