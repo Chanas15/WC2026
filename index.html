@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>World Cup 2026 — Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ===== TOKENS ===== */
+:root{
+  --night:#0A0E27;
+  --night-2:#111638;
+  --card:#161C45;
+  --card-hover:#1C2452;
+  --turf:#00F5A0;
+  --coral:#FF4D6D;
+  --cup:#FFD60A;
+  --violet:#7B2FFF;
+  --ink:#EAF0FF;
+  --ink-dim:#8B94C4;
+  --line:rgba(139,148,196,.18);
+  --shadow:0 8px 32px rgba(0,0,0,.45);
+  --shadow-hover:0 16px 48px rgba(0,0,0,.6);
+}
+[data-theme="light"]{
+  --night:#F0F4FF;
+  --night-2:#E4EAF8;
+  --card:#FFFFFF;
+  --card-hover:#F8FAFF;
+  --ink:#1A1F4E;
+  --ink-dim:#6B74A8;
+  --line:rgba(107,116,168,.18);
+  --shadow:0 4px 24px rgba(0,0,0,.1);
+  --shadow-hover:0 12px 40px rgba(0,0,0,.18);
+}
+
+/* ===== RESET ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Be Vietnam Pro',sans-serif;
+  background:var(--night);
+  color:var(--ink);
+  min-height:100vh;
+  transition:background .35s,color .35s;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    linear-gradient(to bottom, rgba(10,14,39,.6) 0%, rgba(10,14,39,.35) 40%, rgba(10,14,39,.7) 100%),
+    url('bg.jpeg') center center / cover no-repeat;
+  transition:opacity .35s;
+}
+[data-theme="light"] body::before{
+  background:
+    linear-gradient(to bottom, rgba(240,244,255,.6) 0%, rgba(240,244,255,.4) 40%, rgba(240,244,255,.7) 100%),
+    url('bg.jpeg') center center / cover no-repeat;
+}
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 20px 80px}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  display:flex;justify-content:flex-end;align-items:center;gap:10px;
+  padding:14px 0 0;
+}
+.theme-btn{
+  width:38px;height:38px;border-radius:50%;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:.25s;
+}
+.theme-btn:hover{border-color:var(--turf);transform:scale(1.1)}
+
+/* ===== HERO ===== */
+.hero{padding:32px 0 24px;text-align:center}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--turf);
+  border:1px solid rgba(0,245,160,.35);border-radius:50px;padding:6px 16px;
+  margin-bottom:18px;
+}
+.hero-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--turf);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.hero h1{
+  font-family:'Archivo Black',sans-serif;
+  font-size:clamp(34px,7vw,64px);
+  line-height:1.02;
+  background:linear-gradient(110deg,var(--turf) 10%,#5EEAD4 30%,var(--cup) 55%,var(--coral) 85%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-transform:uppercase;
+}
+.hero p{margin-top:12px;color:var(--ink-dim);font-size:15px}
+.hero .flags{margin-top:8px;font-size:22px;letter-spacing:6px}
+
+/* ===== COUNTDOWN ===== */
+.countdown-bar{
+  background:linear-gradient(110deg,rgba(0,245,160,.1),rgba(123,47,255,.1));
+  border:1px solid rgba(0,245,160,.2);
+  border-radius:16px;padding:14px 20px;margin:16px 0;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;
+}
+.countdown-label{font-size:12px;font-weight:700;color:var(--turf);text-transform:uppercase;letter-spacing:.1em}
+.countdown-match{font-size:13px;font-weight:600;color:var(--ink);margin-top:2px}
+.countdown-time{
+  display:flex;gap:8px;flex-shrink:0;
+}
+.cd-unit{
+  background:var(--card);border-radius:10px;padding:8px 12px;text-align:center;
+  min-width:52px;border:1px solid var(--line);
+}
+.cd-unit b{font-family:'Archivo Black';font-size:20px;color:var(--cup);display:block;line-height:1}
+.cd-unit span{font-size:9px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}
+
+/* ===== STATS STRIP ===== */
+.strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+  margin:20px 0 8px;
+}
+.stat{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px 10px;text-align:center;
+  transition:.3s;
+}
+.stat:hover{border-color:var(--turf);transform:translateY(-2px);box-shadow:var(--shadow)}
+.stat b{font-family:'Archivo Black';font-size:24px;display:block;transition:.3s}
+.stat span{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.1em}
+.stat:nth-child(1) b{color:var(--turf)}
+.stat:nth-child(2) b{color:var(--cup)}
+.stat:nth-child(3) b{color:var(--coral)}
+
+/* ===== SEARCH ===== */
+.search-wrap{position:relative;margin:18px 0 4px}
+.search-wrap svg{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  opacity:.45;pointer-events:none;
+}
+#search{
+  width:100%;padding:11px 14px 11px 42px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  color:var(--ink);font-family:'Be Vietnam Pro';font-size:14px;font-weight:500;
+  outline:none;transition:.25s;
+}
+#search::placeholder{color:var(--ink-dim)}
+#search:focus{border-color:var(--turf);box-shadow:0 0 0 3px rgba(0,245,160,.12)}
+
+/* ===== TABS ===== */
+.tabs{
+  display:flex;gap:8px;overflow-x:auto;padding:16px 0 4px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex-shrink:0;border:1px solid var(--line);background:transparent;
+  color:var(--ink-dim);font-family:'Be Vietnam Pro';font-weight:600;font-size:13px;
+  padding:9px 18px;border-radius:50px;cursor:pointer;transition:.25s;
+}
+.tab:hover{border-color:var(--turf);color:var(--ink)}
+.tab.active{
+  background:linear-gradient(110deg,var(--turf),#5EEAD4);
+  color:#06281C;border-color:transparent;font-weight:700;
+}
+.tab.today-tab{
+  border-color:rgba(255,214,10,.4);color:var(--cup);
+}
+.tab.today-tab.active{
+  background:linear-gradient(110deg,var(--cup),#FFB700);
+  color:#3A2D00;
+}
+
+/* ===== GROUP FILTER ===== */
+.groups{display:flex;gap:6px;flex-wrap:wrap;padding:10px 0 18px}
+.gbtn{
+  width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
+  background:transparent;color:var(--ink-dim);font-weight:700;font-size:13px;
+  cursor:pointer;transition:.2s;font-family:'Be Vietnam Pro';
+}
+.gbtn:hover{border-color:var(--cup);color:var(--cup)}
+.gbtn.active{background:var(--cup);color:#3A2D00;border-color:transparent}
+.gbtn.all{width:auto;padding:0 14px}
+
+/* ===== MATCH CARD ===== */
+.day-label{
+  font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-dim);margin:26px 0 10px;display:flex;align-items:center;gap:12px;
+}
+.day-label::after{content:'';flex:1;height:1px;background:var(--line)}
+.day-label.today-label{color:var(--cup)}
+.day-label.today-label::after{background:linear-gradient(90deg,rgba(255,214,10,.5),transparent)}
+
+.match{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:16px 18px;margin-bottom:10px;
+  display:grid;grid-template-columns:auto 1fr auto 1fr auto;
+  align-items:center;gap:12px;
+  transition:border-color .25s,transform .25s,box-shadow .25s,background .25s;
+  position:relative;overflow:hidden;cursor:default;
+}
+.match::before{
+  content:'';position:absolute;inset:0;opacity:0;
+  background:linear-gradient(135deg,rgba(0,245,160,.04),rgba(123,47,255,.04));
+  transition:opacity .25s;
+  pointer-events:none;
+}
+.match:hover{
+  border-color:rgba(0,245,160,.4);
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-hover);
+}
+.match:hover::before{opacity:1}
+.match.done{border-color:rgba(0,245,160,.2)}
+.match.live{
+  border-color:var(--coral);
+  box-shadow:0 0 32px rgba(255,77,109,.2);
+  animation:live-glow 2.5s ease-in-out infinite alternate;
+}
+@keyframes live-glow{
+  from{box-shadow:0 0 24px rgba(255,77,109,.15)}
+  to{box-shadow:0 0 40px rgba(255,77,109,.35)}
+}
+.match.today-match{
+  border-color:rgba(255,214,10,.3);
+  background:linear-gradient(135deg,var(--card) 80%,rgba(255,214,10,.04));
+}
+.match.today-match::after{
+  content:'HÔM NAY';
+  position:absolute;top:10px;right:10px;
+  font-size:9px;font-weight:800;letter-spacing:.1em;
+  color:var(--cup);background:rgba(255,214,10,.12);
+  border:1px solid rgba(255,214,10,.25);
+  border-radius:50px;padding:2px 8px;
+}
+.match.today-match.done::after,.match.today-match.live::after{display:none}
+
+.m-meta{display:flex;flex-direction:column;gap:3px;min-width:64px}
+.m-time{font-family:'Archivo Black';font-size:15px;color:var(--cup)}
+.m-tag{font-size:10px;font-weight:700;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}
+.m-team{font-weight:600;font-size:14px;line-height:1.35}
+.m-team.t1{text-align:right}
+.m-team.t2{text-align:left}
+.m-team.win{color:var(--turf);font-weight:800}
+.m-team mark{background:none;color:var(--cup);font-style:normal}
+
+.m-score{
+  font-family:'Archivo Black';font-size:22px;min-width:74px;text-align:center;
+  background:var(--night);border:1px solid var(--line);border-radius:12px;
+  padding:8px 10px;letter-spacing:.05em;transition:.25s;
+}
+.m-score.has{color:var(--cup);border-color:rgba(255,214,10,.35)}
+.m-score.none{color:var(--ink-dim);font-size:13px;font-family:'Be Vietnam Pro';font-weight:600}
+.m-status{min-width:72px;text-align:right}
+.badge{
+  display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;
+  padding:4px 10px;border-radius:50px;text-transform:uppercase;
+}
+.badge.pending{background:rgba(139,148,196,.12);color:var(--ink-dim)}
+.badge.live{background:rgba(255,77,109,.15);color:var(--coral);animation:pulse 1.4s infinite}
+.badge.done{background:rgba(0,245,160,.12);color:var(--turf)}
+
+/* ===== EMPTY STATE ===== */
+.empty-state{
+  text-align:center;padding:48px 20px;color:var(--ink-dim);
+}
+.empty-state .es-icon{font-size:40px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+
+/* ===== SKELETON LOADING ===== */
+.skeleton{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:16px 18px;margin-bottom:10px;
+  display:flex;align-items:center;gap:16px;
+  animation:sk-fade 1.4s ease-in-out infinite;
+}
+@keyframes sk-fade{0%,100%{opacity:.5}50%{opacity:1}}
+.sk-block{border-radius:8px;background:var(--line)}
+
+/* ===== STANDINGS ===== */
+.section-title{
+  font-family:'Archivo Black';font-size:clamp(20px,4vw,28px);
+  margin:54px 0 6px;text-transform:uppercase;
+  background:linear-gradient(110deg,var(--cup),var(--coral));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.section-sub{color:var(--ink-dim);font-size:13px;margin-bottom:20px}
+.standings{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.gcard{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:16px;overflow:hidden;transition:.25s;
+}
+.gcard:hover{border-color:rgba(255,214,10,.3);box-shadow:var(--shadow)}
+.gcard h3{
+  font-family:'Archivo Black';font-size:14px;margin-bottom:12px;
+  color:var(--turf);text-transform:uppercase;letter-spacing:.08em;
+  display:flex;align-items:center;gap:8px;
+}
+.gcard h3::before{
+  content:'';width:18px;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--turf),var(--cup));
+}
+.gcard table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gcard th{
+  text-align:center;color:var(--ink-dim);font-size:10px;font-weight:700;
+  text-transform:uppercase;padding:4px 2px;letter-spacing:.05em;
+}
+.gcard th:first-child{text-align:left}
+.gcard td{padding:7px 2px;text-align:center;border-top:1px solid var(--line)}
+.gcard td:first-child{text-align:left;font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gcard tr.q1 td:first-child{color:var(--turf)}
+.gcard tr.q2 td:first-child{color:#5EEAD4}
+.gcard td.pts{font-weight:800;color:var(--cup)}
+
+/* ===== FOOTER ===== */
+footer{
+  margin-top:70px;text-align:center;color:var(--ink-dim);font-size:12px;
+  border-top:1px solid var(--line);padding-top:24px;
+}
+footer b{color:var(--turf)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:640px){
+  .match{grid-template-columns:1fr auto 1fr;gap:8px;padding:14px}
+  .m-meta{grid-column:1/-1;flex-direction:row;justify-content:space-between;min-width:0;order:-1}
+  .m-status{display:none}
+  .m-team{font-size:12.5px}
+  .m-score{min-width:60px;font-size:18px;padding:6px}
+  .strip{grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat b{font-size:18px}
+  .countdown-bar{flex-direction:column;align-items:flex-start;gap:8px}
+  .cd-unit{min-width:44px;padding:6px 8px}
+  .cd-unit b{font-size:16px}
+  .match.today-match::after{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="theme-btn" id="themeBtn" title="Chuyển giao diện" aria-label="Toggle theme">🌙</button>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-eyebrow"><span class="dot"></span> FIFA World Cup • 11/6 — 19/7</div>
+    <h1>World Cup<br/>2026</h1>
+    <p>48 đội tuyển • 104 trận đấu • Giờ Việt Nam (GMT+7)</p>
+    <div class="flags">🇺🇸 🇨🇦 🇲🇽</div>
+  </header>
+
+  <!-- COUNTDOWN -->
+  <div class="countdown-bar" id="countdown-bar" style="display:none">
+    <div>
+      <div class="countdown-label">⚡ Trận tiếp theo</div>
+      <div class="countdown-match" id="countdown-match">—</div>
+    </div>
+    <div class="countdown-time">
+      <div class="cd-unit"><b id="cd-h">00</b><span>Giờ</span></div>
+      <div class="cd-unit"><b id="cd-m">00</b><span>Phút</span></div>
+      <div class="cd-unit"><b id="cd-s">00</b><span>Giây</span></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="strip">
+    <div class="stat"><b id="st-done">—</b><span>Đã kết thúc</span></div>
+    <div class="stat"><b id="st-today">—</b><span>Hôm nay</span></div>
+    <div class="stat"><b id="st-left">—</b><span>Còn lại</span></div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input type="search" id="search" placeholder="Tìm đội bóng… (VD: Brazil, Anh, Đức)"/>
+  </div>
+
+  <!-- TABS -->
+  <nav class="tabs" id="tabs">
+    <button class="tab today-tab" data-round="__today__">📅 Hôm nay</button>
+    <button class="tab active" data-round="Vòng bảng">Vòng bảng</button>
+    <button class="tab" data-round="Vòng 32 đội">Vòng 32 đội</button>
+    <button class="tab" data-round="Vòng 16 đội">Vòng 16 đội</button>
+    <button class="tab" data-round="Tứ kết">Tứ kết</button>
+    <button class="tab" data-round="Bán kết">Bán kết</button>
+    <button class="tab" data-round="Tranh hạng Ba">Hạng Ba</button>
+    <button class="tab" data-round="Chung kết">🏆 Chung kết</button>
+  </nav>
+
+  <!-- GROUP FILTER -->
+  <div class="groups" id="groups">
+    <button class="gbtn all active" data-g="all">Tất cả</button>
+  </div>
+
+  <!-- MATCH LIST -->
+  <main id="list">
+    <!-- skeleton -->
+    <div class="skeleton"><div class="sk-block" style="width:54px;height:36px"></div><div class="sk-block" style="flex:1;height:20px"></div><div class="sk-block" style="width:72px;height:40px;border-radius:12px"></div><div class="sk-block" style="flex:1;height:20px"></div><div class="sk-block" style="width:60px;height:24px;border-radius:50px"></div></div>
+    <div class="skeleton"><div class="sk-block" style="width:54px;height:36px"></div><div class="sk-block" style="flex:1;height:20px"></div><div class="sk-block" style="width:72px;height:40px;border-radius:12px"></div><div class="sk-block" style="flex:1;height:20px"></div><div class="sk-block" style="width:60px;height:24px;border-radius:50px"></div></div>
+    <div class="skeleton"><div class="sk-block" style="width:54px;height:36px"></div><div class="sk-block" style="flex:1;height:20px"></div><div class="sk-block" style="width:72px;height:40px;border-radius:12px"></div><div class="sk-block" style="flex:1;height:20px"></div><div class="sk-block" style="width:60px;height:24px;border-radius:50px"></div></div>
+  </main>
+
+  <!-- STANDINGS -->
+  <h2 class="section-title">Bảng xếp hạng</h2>
+  <p class="section-sub">Tự động tính từ tỷ số vòng bảng — Thắng 3đ • Hòa 1đ • Top 2 đi tiếp (xanh)</p>
+  <div class="standings" id="standings"></div>
+
+  <footer>
+    Dữ liệu cập nhật từ <b>Notion</b> • Dashboard by <b>Chan</b> ⚽
+  </footer>
+</div>
+
+<script>
+/* ===== STATE ===== */
+let MATCHES = [];
+let curRound = 'Vòng bảng';
+let curGroup = 'all';
+let searchQ = '';
+let countdownTimer = null;
+
+/* ===== TIMEZONE HELPER — lấy giờ VN (GMT+7) chuẩn ===== */
+function vnNow() {
+  return new Date(Date.now() + 7 * 3600 * 1000);
+}
+function todayVN() {
+  const d = vnNow();
+  return pad(d.getUTCDate()) + '/' + pad(d.getUTCMonth() + 1);
+}
+function pad(n) { return String(n).padStart(2, '0'); }
+
+/* ===== DARK/LIGHT TOGGLE ===== */
+const themeBtn = document.getElementById('themeBtn');
+let isDark = true;
+themeBtn.addEventListener('click', () => {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  themeBtn.textContent = isDark ? '🌙' : '☀️';
+});
+
+/* ===== LOAD ===== */
+async function load() {
+  try {
+    const r = await fetch('/api/matches');
+    const d = await r.json();
+    MATCHES = d.matches || [];
+    STANDINGS = d.standings || [];
+    MATCHES.sort((a, b) => num(a.tran) - num(b.tran));
+    buildGroupButtons();
+    render();
+    renderStandings();
+    renderStats();
+    startCountdown();
+  } catch (e) {
+    document.getElementById('list').innerHTML =
+      '<div class="empty-state"><div class="es-icon">⚠️</div><p>Không tải được dữ liệu. Kiểm tra kết nối API nhé!</p></div>';
+  }
+}
+function num(t) { const m = (t || '').match(/^T(\d+)/); return m ? +m[1] : 999; }
+
+/* ===== GROUP BUTTONS ===== */
+function buildGroupButtons() {
+  const el = document.getElementById('groups');
+  // xóa các nút cũ (trừ "Tất cả")
+  el.querySelectorAll('.gbtn:not(.all)').forEach(b => b.remove());
+  'ABCDEFGHIJKL'.split('').forEach(g => {
+    const b = document.createElement('button');
+    b.className = 'gbtn'; b.dataset.g = g; b.textContent = g;
+    el.appendChild(b);
+  });
+  el.addEventListener('click', e => {
+    if (!e.target.classList.contains('gbtn')) return;
+    el.querySelectorAll('.gbtn').forEach(x => x.classList.remove('active'));
+    e.target.classList.add('active');
+    curGroup = e.target.dataset.g;
+    render();
+  });
+}
+
+/* ===== TABS ===== */
+document.getElementById('tabs').addEventListener('click', e => {
+  if (!e.target.classList.contains('tab')) return;
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  e.target.classList.add('active');
+  curRound = e.target.dataset.round;
+  const isGroup = curRound === 'Vòng bảng';
+  const isToday = curRound === '__today__';
+  document.getElementById('groups').style.display = isGroup ? 'flex' : 'none';
+  if (isToday) {
+    document.getElementById('search').value = '';
+    searchQ = '';
+  }
+  render();
+});
+
+/* ===== SEARCH ===== */
+document.getElementById('search').addEventListener('input', e => {
+  searchQ = e.target.value.trim().toLowerCase();
+  render();
+});
+
+/* ===== HIGHLIGHT SEARCH TERM ===== */
+function highlight(text, query) {
+  if (!query) return esc(text);
+  const idx = text.toLowerCase().indexOf(query);
+  if (idx === -1) return esc(text);
+  return esc(text.slice(0, idx)) + '<mark>' + esc(text.slice(idx, idx + query.length)) + '</mark>' + esc(text.slice(idx + query.length));
+}
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ===== RENDER MATCH LIST ===== */
+function render() {
+  const list = document.getElementById('list');
+  const today = todayVN();
+  let arr;
+
+  if (curRound === '__today__') {
+    arr = MATCHES.filter(m => m.ngay === today);
+  } else {
+    arr = MATCHES.filter(m => m.vong === curRound);
+    if (curRound === 'Vòng bảng' && curGroup !== 'all')
+      arr = arr.filter(m => m.bang === curGroup);
+  }
+
+  // filter search
+  if (searchQ) {
+    arr = arr.filter(m =>
+      (m.doi1 || '').toLowerCase().includes(searchQ) ||
+      (m.doi2 || '').toLowerCase().includes(searchQ)
+    );
+  }
+
+  if (!arr.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="es-icon">${searchQ ? '🔍' : '📭'}</div>
+      <p>${searchQ ? `Không tìm thấy đội "<b>${esc(searchQ)}</b>"` : 'Chưa có trận nào trong mục này.'}</p>
+    </div>`;
+    return;
+  }
+
+  let html = '', lastDay = '';
+  arr.forEach(m => {
+    if (m.ngay !== lastDay) {
+      lastDay = m.ngay;
+      const isToday = m.ngay === today;
+      html += `<div class="day-label ${isToday ? 'today-label' : ''}">
+        ${isToday ? '⭐' : '📅'} ${isToday ? 'Hôm nay — ' : ''}Ngày ${m.ngay}
+      </div>`;
+    }
+    const done = m.trangthai === 'Đã kết thúc';
+    const live = m.trangthai === 'Đang diễn ra';
+    const isToday = m.ngay === today;
+    const score = m.tyso
+      ? `<div class="m-score has">${esc(m.tyso)}</div>`
+      : `<div class="m-score none">${esc(m.gio || '--:--')}</div>`;
+    const badge = live
+      ? '<span class="badge live">● Live</span>'
+      : done ? '<span class="badge done">Kết thúc</span>'
+             : '<span class="badge pending">Chưa đấu</span>';
+
+    // highlight đội thắng — so sánh exact sau khi strip emoji
+    const w = (m.doithang || '').replace(/\p{Emoji_Presentation}/gu, '').trim();
+    const d1 = (m.doi1 || '').replace(/\p{Emoji_Presentation}/gu, '').trim();
+    const d2 = (m.doi2 || '').replace(/\p{Emoji_Presentation}/gu, '').trim();
+    const draw = w === 'Hoà' || w === 'Hòa' || w === 'Hoa' || w === 'Draw';
+    const win1 = !draw && w && d1.toLowerCase() === w.toLowerCase();
+    const win2 = !draw && w && d2.toLowerCase() === w.toLowerCase();
+
+    html += `
+    <div class="match ${done?'done':''} ${live?'live':''} ${isToday&&!done&&!live?'today-match':''}">
+      <div class="m-meta">
+        <span class="m-time">${esc(m.gio || '--:--')}</span>
+        <span class="m-tag">${m.bang === 'KO' ? esc(m.vong) : ('Bảng ' + esc(m.bang))}</span>
+      </div>
+      <div class="m-team t1 ${win1 ? 'win' : ''}">${highlight(m.doi1 || '—', searchQ)}</div>
+      ${score}
+      <div class="m-team t2 ${win2 ? 'win' : ''}">${highlight(m.doi2 || '—', searchQ)}</div>
+      <div class="m-status">${badge}</div>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+/* ===== STANDINGS TỪ API (real-time) ===== */
+let STANDINGS = [];
+function renderStandings() {
+  if (!STANDINGS.length) return; // chờ data
+  const groups = {};
+  STANDINGS.forEach(row => {
+    if (!groups[row.bang]) groups[row.bang] = [];
+    groups[row.bang].push(row);
+  });
+  let html = '';
+  Object.keys(groups).sort().forEach(g => {
+    const teams = groups[g].sort((a, b) => a.vi_tri - b.vi_tri);
+    let rows = '';
+    teams.forEach((t, i) => {
+      rows += `<tr class="${i === 0 ? 'q1' : i === 1 ? 'q2' : ''}">
+        <td>${esc(t.ten)}</td><td>${t.st}</td><td>${t.thang}</td>
+        <td>${t.hoa}</td><td>${t.thua}</td><td>${t.hs > 0 ? '+' : ''}${t.hs}</td>
+        <td class="pts">${t.diem}</td></tr>`;
+    });
+    html += `<div class="gcard"><h3>Bảng ${esc(g)}</h3>
+      <table><thead><tr>
+        <th>Đội</th><th>ST</th><th>T</th><th>H</th><th>B</th><th>HS</th><th>Đ</th>
+      </tr></thead><tbody>${rows}</tbody></table></div>`;
+  });
+  document.getElementById('standings').innerHTML = html || '<p style="color:var(--ink-dim)">Chưa có dữ liệu vòng bảng.</p>';
+}
+
+/* ===== STATS ===== */
+function renderStats() {
+  const today = todayVN();
+  const done = MATCHES.filter(m => m.trangthai === 'Đã kết thúc').length;
+  const todayCount = MATCHES.filter(m => m.ngay === today).length;
+  document.getElementById('st-done').textContent = done;
+  document.getElementById('st-today').textContent = todayCount;
+  document.getElementById('st-left').textContent = MATCHES.length - done;
+}
+
+/* ===== COUNTDOWN ===== */
+function startCountdown() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  const today = todayVN();
+  // tìm trận tiếp theo chưa kết thúc, chưa live
+  const next = MATCHES.find(m =>
+    m.trangthai !== 'Đã kết thúc' && m.trangthai !== 'Đang diễn ra' && m.gio && m.ngay
+  );
+  if (!next) {
+    document.getElementById('countdown-bar').style.display = 'none';
+    return;
+  }
+
+  // parse ngày/giờ VN
+  const [dd, mm] = next.ngay.split('/').map(Number);
+  const [hh, min] = next.gio.split(':').map(Number);
+  const year = vnNow().getUTCFullYear();
+  // construct Date in UTC (ngay/gio là GMT+7 nên trừ 7h)
+  const matchUTC = Date.UTC(year, mm - 1, dd, hh - 7, min, 0);
+
+  document.getElementById('countdown-match').textContent =
+    `${next.doi1} vs ${next.doi2} — ${next.gio} ngày ${next.ngay}`;
+  document.getElementById('countdown-bar').style.display = 'flex';
+
+  function tick() {
+    const diff = matchUTC - Date.now();
+    if (diff <= 0) {
+      document.getElementById('cd-h').textContent = '00';
+      document.getElementById('cd-m').textContent = '00';
+      document.getElementById('cd-s').textContent = '00';
+      clearInterval(countdownTimer);
+      return;
+    }
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById('cd-h').textContent = pad(h > 99 ? 99 : h);
+    document.getElementById('cd-m').textContent = pad(m);
+    document.getElementById('cd-s').textContent = pad(s);
+  }
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+}
+
+/* ===== AUTO-SCROLL & TAB KHI CÓ TRẬN HÔM NAY ===== */
+function autoFocusToday() {
+  const today = todayVN();
+  const hasToday = MATCHES.some(m => m.ngay === today);
+  if (!hasToday) return;
+
+  // Chuyển sang tab "Hôm nay"
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  const todayTab = document.querySelector('.tab[data-round="__today__"]');
+  todayTab.classList.add('active');
+  curRound = '__today__';
+  document.getElementById('groups').style.display = 'none';
+  render();
+
+  // Scroll mượt xuống danh sách trận
+  requestAnimationFrame(() => {
+    const firstMatch = document.querySelector('#list .match');
+    if (firstMatch) firstMatch.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+/* ===== BOOT ===== */
+load().then(autoFocusToday);
+setInterval(load, 120000);
+</script>
+</body>
+</html>
