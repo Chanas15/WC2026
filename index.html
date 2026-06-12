@@ -266,8 +266,8 @@ body::before{
 .m-team.t2{text-align:left;flex-direction:row}
 .m-team.win{color:var(--turf);font-weight:800}
 .m-team mark{background:none;color:var(--cup);font-style:normal}
-.m-crest{width:22px;height:22px;object-fit:contain;flex-shrink:0}
-@media(max-width:640px){.m-crest{width:18px;height:18px}}
+.m-flag{font-size:20px;line-height:1;flex-shrink:0}
+@media(max-width:640px){.m-flag{font-size:17px}}
 
 .m-score{
   font-family:'Be Vietnam Pro';font-weight:800;font-size:22px;min-width:74px;text-align:center;
@@ -506,6 +506,27 @@ footer b{color:var(--turf)}
 </div>
 
 <script>
+/* ===== CỜ QUỐC GIA (TLA → emoji) ===== */
+const FLAG = {
+  MEX:'🇲🇽',RSA:'🇿🇦',KOR:'🇰🇷',CZE:'🇨🇿',CAN:'🇨🇦',BIH:'🇧🇦',
+  QAT:'🇶🇦',SUI:'🇨🇭',BRA:'🇧🇷',MAR:'🇲🇦',HAI:'🇭🇹',SCO:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  USA:'🇺🇸',PAR:'🇵🇾',AUS:'🇦🇺',TUR:'🇹🇷',GER:'🇩🇪',CUW:'🇨🇼',
+  NED:'🇳🇱',JPN:'🇯🇵',CIV:'🇨🇮',ECU:'🇪🇨',SWE:'🇸🇪',URU:'🇺🇾',
+  ARG:'🇦🇷',ENG:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',ESP:'🇪🇸',POR:'🇵🇹',FRA:'🇫🇷',BEL:'🇧🇪',
+  SRB:'🇷🇸',NGA:'🇳🇬',SEN:'🇸🇳',CMR:'🇨🇲',GHA:'🇬🇭',TUN:'🇹🇳',
+  EGY:'🇪🇬',ALG:'🇩🇿',KSA:'🇸🇦',IRN:'🇮🇷',IRQ:'🇮🇶',UZB:'🇺🇿',
+  COL:'🇨🇴',CHI:'🇨🇱',VEN:'🇻🇪',CRC:'🇨🇷',HON:'🇭🇳',PAN:'🇵🇦',
+  NZL:'🇳🇿',THA:'🇹🇭',IDN:'🇮🇩',IND:'🇮🇳',CHN:'🇨🇳',WAL:'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  AUT:'🇦🇹',DEN:'🇩🇰',NOR:'🇳🇴',FIN:'🇫🇮',GRE:'🇬🇷',HUN:'🇭🇺',
+  SVK:'🇸🇰',CRO:'🇭🇷',SLO:'🇸🇮',ROU:'🇷🇴',BUL:'🇧🇬',UKR:'🇺🇦',
+  RUS:'🇷🇺',POL:'🇵🇱',SWI:'🇨🇭',MLI:'🇲🇱',BFA:'🇧🇫',GNB:'🇬🇼',
+  GAM:'🇬🇲',CPV:'🇨🇻',LBR:'🇱🇷',SLE:'🇸🇱',BEN:'🇧🇯',TOG:'🇹🇬',
+  ZIM:'🇿🇼',ZAM:'🇿🇲',ANG:'🇦🇴',MOZ:'🇲🇿',BOT:'🇧🇼',NAM:'🇳🇦',
+  PER:'🇵🇪',BOL:'🇧🇴',JAM:'🇯🇲',TRI:'🇹🇹',CUB:'🇨🇺',GUA:'🇬🇹',
+  PHI:'🇵🇭',VIE:'🇻🇳',MAS:'🇲🇾',SGP:'🇸🇬',TAH:'🇵🇫',NCL:'🇳🇨',
+};
+function getFlag(tla){ return FLAG[tla] || '🏳️'; }
+
 /* ===== STATE ===== */
 let MATCHES = [];
 let curRound = 'Vòng bảng';
@@ -671,12 +692,12 @@ function render() {
         <span class="m-tag">${m.bang === 'KO' ? esc(m.vong) : ('Bảng ' + esc(m.bang))}</span>
       </div>
       <div class="m-team t1 ${win1 ? 'win' : ''}">
-        ${m.co1 ? `<img class="m-crest" src="${m.co1}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+        <span class="m-flag">${getFlag(m.tla1)}</span>
         <span>${highlight(m.doi1 || '—', searchQ)}</span>
       </div>
       ${score}
       <div class="m-team t2 ${win2 ? 'win' : ''}">
-        ${m.co2 ? `<img class="m-crest" src="${m.co2}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+        <span class="m-flag">${getFlag(m.tla2)}</span>
         <span>${highlight(m.doi2 || '—', searchQ)}</span>
       </div>
       <div class="m-status">${badge}</div>
@@ -802,7 +823,7 @@ function renderPredictions() {
     <div class="predict-card">
       <div>
         <div class="predict-team left">
-          ${m.co1 ? `<img class="m-crest" src="${m.co1}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <span class="m-flag">${getFlag(m.tla1)}</span>
           <span>${esc(m.doi1)}</span>
         </div>
         <div class="predict-meta" style="text-align:right">${m.ngay} • ${m.gio}</div>
@@ -816,7 +837,7 @@ function renderPredictions() {
       </div>
       <div>
         <div class="predict-team right">
-          ${m.co2 ? `<img class="m-crest" src="${m.co2}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <span class="m-flag">${getFlag(m.tla2)}</span>
           <span>${esc(m.doi2)}</span>
         </div>
         <div class="predict-meta">${m.bang === 'KO' ? m.vong : 'Bảng ' + m.bang}</div>
