@@ -86,35 +86,44 @@ export default async function handler(req, res) {
         gio,
         doi1: m.homeTeam?.name || '?',
         doi2: m.awayTeam?.name || '?',
+        co1: m.homeTeam?.crest || '',
+        co2: m.awayTeam?.crest || '',
         tyso,
         doithang,
         trangthai: STATUS_VI[m.status] || 'Chưa đấu',
       };
     });
 
-    // ===== XỬ LÝ BẢNG XẾP HẠNG =====
-    let standings = [];
-    if (standingsData?.standings) {
-      standings = standingsData.standings
-        .filter(s => s.type === 'TOTAL')
-        .flatMap(s => {
-          const group = s.group ? s.group.replace('GROUP_', '') : '?';
-          return (s.table || []).map(row => ({
-            bang: group,
-            ten: row.team?.name || '',
-            logo: row.team?.crest || '',
-            st: row.playedGames,
-            thang: row.won,
-            hoa: row.draw,
-            thua: row.lost,
-            bt: row.goalsFor,
-            bb: row.goalsAgainst,
-            hs: row.goalDifference,
-            diem: row.points,
-            vi_tri: row.position,
-          }));
-        });
-    }
+    // ===== TÍNH BẢNG XẾP HẠNG TỪ KẾT QUẢ TRẬN =====
+    const groupMap = {};
+    matches.filter(m => m.vong === 'Vòng bảng').forEach(m => {
+      const g = m.bang;
+      if (!groupMap[g]) groupMap[g] = {};
+      [m.doi1, m.doi2].forEach(t => {
+        if (t && !groupMap[g][t])
+          groupMap[g][t] = { P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0 };
+      });
+      const s = m.tyso.match(/(\d+)\s*-\s*(\d+)/);
+      if (s) {
+        const g1 = +s[1], g2 = +s[2];
+        const t1 = groupMap[g][m.doi1], t2 = groupMap[g][m.doi2];
+        if (t1 && t2) {
+          t1.P++; t2.P++;
+          t1.GF += g1; t1.GA += g2; t2.GF += g2; t2.GA += g1;
+          if (g1 > g2) { t1.W++; t1.Pts += 3; t2.L++; }
+          else if (g1 < g2) { t2.W++; t2.Pts += 3; t1.L++; }
+          else { t1.D++; t2.D++; t1.Pts++; t2.Pts++; }
+        }
+      }
+    });
+
+    let pos = 0;
+    const standings = Object.entries(groupMap).flatMap(([bang, teams]) => {
+      return Object.entries(teams)
+        .map(([ten, s]) => ({ bang, ten, st:s.P, thang:s.W, hoa:s.D, thua:s.L, hs:s.GF-s.GA, diem:s.Pts }))
+        .sort((a, b) => b.diem - a.diem || b.hs - a.hs || 0)
+        .map((t, i) => ({ ...t, vi_tri: i + 1 }));
+    });
 
     return res.status(200).json({ matches, standings });
 

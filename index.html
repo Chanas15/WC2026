@@ -154,7 +154,7 @@ body::before{
 .tabs::-webkit-scrollbar{display:none}
 .tab{
   flex-shrink:0;border:1px solid var(--line);background:transparent;
-  color:var(--ink-dim);font-family:'Be Vietnam Pro';font-weight:600;font-size:13px;
+  color:#ffffff;font-family:'Be Vietnam Pro';font-weight:600;font-size:13px;
   padding:9px 18px;border-radius:50px;cursor:pointer;transition:.25s;
 }
 .tab:hover{border-color:var(--turf);color:var(--ink)}
@@ -237,11 +237,13 @@ body::before{
 .m-meta{display:flex;flex-direction:column;gap:3px;min-width:64px}
 .m-time{font-family:'Archivo Black';font-size:15px;color:var(--cup)}
 .m-tag{font-size:10px;font-weight:700;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em}
-.m-team{font-weight:600;font-size:14px;line-height:1.35}
-.m-team.t1{text-align:right}
-.m-team.t2{text-align:left}
+.m-team{font-weight:600;font-size:14px;line-height:1.35;display:flex;align-items:center;gap:7px}
+.m-team.t1{text-align:right;flex-direction:row-reverse}
+.m-team.t2{text-align:left;flex-direction:row}
 .m-team.win{color:var(--turf);font-weight:800}
 .m-team mark{background:none;color:var(--cup);font-style:normal}
+.m-crest{width:22px;height:22px;object-fit:contain;flex-shrink:0}
+@media(max-width:640px){.m-crest{width:18px;height:18px}}
 
 .m-score{
   font-family:'Archivo Black';font-size:22px;min-width:74px;text-align:center;
@@ -407,8 +409,8 @@ footer b{color:var(--turf)}
   </main>
 
   <!-- STANDINGS -->
-  <h2 class="section-title">Bảng xếp hạng</h2>
-  <p class="section-sub">Tự động tính từ tỷ số vòng bảng — Thắng 3đ • Hòa 1đ • Top 2 đi tiếp (xanh)</p>
+  <h2 class="section-title">Bảng đấu</h2>
+  <p class="section-sub">THẮNG 3Đ • HÒA 1Đ • TOP 2 MỖI BẢNG ĐI TIẾP (XANH) • 8 ĐỘI TOP 3 CÓ THÀNH TÍCH TỐT NHẤT ĐI TIẾP</p>
   <div class="standings" id="standings"></div>
 
   <footer>
@@ -579,9 +581,15 @@ function render() {
         <span class="m-time">${esc(m.gio || '--:--')}</span>
         <span class="m-tag">${m.bang === 'KO' ? esc(m.vong) : ('Bảng ' + esc(m.bang))}</span>
       </div>
-      <div class="m-team t1 ${win1 ? 'win' : ''}">${highlight(m.doi1 || '—', searchQ)}</div>
+      <div class="m-team t1 ${win1 ? 'win' : ''}">
+        ${m.co1 ? `<img class="m-crest" src="${m.co1}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+        <span>${highlight(m.doi1 || '—', searchQ)}</span>
+      </div>
       ${score}
-      <div class="m-team t2 ${win2 ? 'win' : ''}">${highlight(m.doi2 || '—', searchQ)}</div>
+      <div class="m-team t2 ${win2 ? 'win' : ''}">
+        ${m.co2 ? `<img class="m-crest" src="${m.co2}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+        <span>${highlight(m.doi2 || '—', searchQ)}</span>
+      </div>
       <div class="m-status">${badge}</div>
     </div>`;
   });
